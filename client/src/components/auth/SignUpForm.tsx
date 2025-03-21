@@ -8,12 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
 import { insertUserSchema } from "@shared/schema";
+import { AtSign, User, LockKeyhole, ShieldCheck } from "lucide-react";
 
 // Extend the insert schema with password confirmation
 const signUpSchema = insertUserSchema.extend({
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
-  email: z.string().email("Invalid email address").optional().nullable(),
+  email: z.string().email("Invalid email address"),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -45,7 +46,7 @@ export function SignUpForm({ onSubmit, onToggleForm, isSubmitting }: SignUpFormP
     try {
       const success = await onSubmit(values);
       if (!success) {
-        setError("Username already exists");
+        setError("Email or username already exists");
       }
     } catch (err) {
       toast({
@@ -57,11 +58,11 @@ export function SignUpForm({ onSubmit, onToggleForm, isSubmitting }: SignUpFormP
   };
   
   return (
-    <Card className="w-[350px] mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-        <CardDescription>
-          Sign up for a new account to access the chat
+    <Card className="w-full max-w-md mx-auto border-none shadow-lg dark:bg-[#111B21] dark:text-gray-100">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
+        <CardDescription className="text-center">
+          Sign up to start chatting with your friends
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,12 +70,21 @@ export function SignUpForm({ onSubmit, onToggleForm, isSubmitting }: SignUpFormP
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="Choose a username" {...field} />
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        type="email" 
+                        placeholder="you@example.com" 
+                        className="pl-10"
+                        {...field} 
+                        value={field.value || ""} 
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -83,12 +93,19 @@ export function SignUpForm({ onSubmit, onToggleForm, isSubmitting }: SignUpFormP
             
             <FormField
               control={form.control}
-              name="email"
+              name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email (Optional)</FormLabel>
+                  <FormLabel>Username</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="your@email.com" {...field} value={field.value || ""} />
+                    <div className="relative">
+                      <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        placeholder="Choose a username" 
+                        className="pl-10"
+                        {...field} 
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -102,7 +119,15 @@ export function SignUpForm({ onSubmit, onToggleForm, isSubmitting }: SignUpFormP
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Create a password" {...field} />
+                    <div className="relative">
+                      <LockKeyhole className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        type="password" 
+                        placeholder="Create a password" 
+                        className="pl-10"
+                        {...field} 
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -116,7 +141,15 @@ export function SignUpForm({ onSubmit, onToggleForm, isSubmitting }: SignUpFormP
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="Confirm your password" {...field} />
+                    <div className="relative">
+                      <ShieldCheck className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        type="password" 
+                        placeholder="Confirm your password" 
+                        className="pl-10"
+                        {...field} 
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -127,14 +160,22 @@ export function SignUpForm({ onSubmit, onToggleForm, isSubmitting }: SignUpFormP
               <div className="text-sm font-medium text-destructive">{error}</div>
             )}
             
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Creating account..." : "Sign Up"}
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating account..." : "Create Account"}
             </Button>
           </form>
         </Form>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <Button variant="link" onClick={onToggleForm}>
+        <Button 
+          variant="link" 
+          onClick={onToggleForm}
+          className="text-primary hover:text-primary/80"
+        >
           Already have an account? Sign in
         </Button>
       </CardFooter>

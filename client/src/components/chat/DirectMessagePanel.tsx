@@ -1,13 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { socketClient } from "@/lib/socket";
 import { type DirectChatMessage } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
+import { ArrowLeft, MoreVertical, Paperclip, Send, Mic, CheckCheck } from "lucide-react";
+import { createUniqueDirectMessageMap } from "@/useChat.fix";
 
 interface DirectMessagePanelProps {
   selectedUserId: number;
@@ -60,47 +61,67 @@ export function DirectMessagePanel({
   
   // Format timestamp
   const formatTime = (timestamp: string) => {
-    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    const date = new Date(timestamp);
+    return format(date, "h:mm a");
   };
   
+  // Create a map of direct messages with unique keys to prevent React warnings
+  const uniqueMessages = useMemo(() => {
+    return createUniqueDirectMessageMap(messages);
+  }, [messages]);
+  
   return (
-    <Card className="flex flex-col h-full">
-      <CardHeader className="py-3 px-4 flex flex-row items-center justify-between border-b">
+    <Card className="flex flex-col h-full border-none rounded-none">
+      <CardHeader className="py-2 px-4 flex flex-row items-center justify-between whatsapp-header">
         <div className="flex items-center gap-2">
-          <Avatar>
-            <AvatarFallback>{getInitials(selectedUsername)}</AvatarFallback>
+          <Button variant="ghost" size="icon" className="mr-1" onClick={onClose}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Avatar className="h-9 w-9">
+            <AvatarFallback className="bg-primary/10 text-primary">
+              {getInitials(selectedUsername)}
+            </AvatarFallback>
           </Avatar>
-          <CardTitle className="text-lg">{selectedUsername}</CardTitle>
+          <div className="flex flex-col">
+            <span className="font-semibold text-sm">{selectedUsername}</span>
+            <span className="text-xs text-muted-foreground/90">online</span>
+          </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          Close
-        </Button>
+        <div className="flex gap-3">
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <MoreVertical className="h-5 w-5" />
+          </Button>
+        </div>
       </CardHeader>
       
-      <CardContent className="flex-grow p-0">
-        <ScrollArea className="h-[400px] p-4">
-          <div className="flex flex-col gap-2">
-            {messages.map((message) => {
+      <CardContent className="flex-grow p-0 whatsapp-bg">
+        <ScrollArea className="h-[calc(100vh-12rem)] py-4 px-2">
+          <div className="flex flex-col gap-1 md:px-8">
+            {Object.entries(uniqueMessages).map(([uniqueId, message]) => {
               const isCurrentUser = message.senderId === currentUserId;
               
               return (
                 <div 
-                  key={message.id}
-                  className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+                  key={uniqueId}
+                  className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'} mb-2`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[75%] rounded-lg p-2 px-3 shadow-sm ${
                       isCurrentUser 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted'
+                        ? 'message-bubble-outgoing' 
+                        : 'message-bubble-incoming'
                     }`}
                   >
                     <div className="flex flex-col">
                       <div className="break-words whitespace-pre-wrap">{message.content}</div>
-                      <div className={`text-xs mt-1 ${isCurrentUser ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                        {formatTime(message.timestamp)}
+                      <div className="flex justify-end items-center mt-1 gap-1">
+                        <span className="text-[0.65rem] text-muted-foreground/70">
+                          {formatTime(message.timestamp)}
+                        </span>
                         {message.read && isCurrentUser && (
-                          <span className="ml-2">Read</span>
+                          <span className="text-primary">
+                            <CheckCheck className="h-3.5 w-3.5" />
+                          </span>
                         )}
                       </div>
                     </div>
@@ -113,17 +134,27 @@ export function DirectMessagePanel({
         </ScrollArea>
       </CardContent>
       
-      <CardFooter className="p-4 border-t">
-        <div className="flex w-full items-center space-x-2">
+      <CardFooter className="p-2 whatsapp-header">
+        <div className="flex w-full items-center gap-2">
+          <Button variant="ghost" size="icon" className="text-muted-foreground">
+            <Paperclip className="h-5 w-5" />
+          </Button>
+          
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={handleKeyPress}
-            placeholder="Type a message..."
-            className="flex-1 min-h-[60px] max-h-[120px]"
+            placeholder="Type a message"
+            className="flex-1 min-h-[40px] max-h-[120px] py-2 px-3 rounded-full border-none resize-none focus-visible:ring-0 focus-visible:ring-offset-0"
           />
-          <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-            Send
+          
+          <Button 
+            onClick={handleSendMessage} 
+            disabled={!newMessage.trim()} 
+            size="icon" 
+            className="rounded-full bg-primary hover:bg-primary/90 h-10 w-10"
+          >
+            {newMessage.trim() ? <Send className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
           </Button>
         </div>
       </CardFooter>

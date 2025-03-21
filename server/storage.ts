@@ -1,8 +1,6 @@
 import { 
-  messages, 
   type Message, 
   type InsertMessage, 
-  users, 
   type User, 
   type InsertUser,
   type SystemMessage,
@@ -11,9 +9,9 @@ import {
   type DirectChatMessage,
   type InsertDirectMessage,
   type DirectMessage,
-  directMessages,
   type SignInCredentials
 } from "@shared/schema";
+import * as db from './db';
 
 // modify the interface with any CRUD methods
 // you might need
@@ -233,4 +231,96 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database Storage Implementation
+
+export class DatabaseStorage implements IStorage {
+  private connectedUsers: Map<number, { id: number, username: string, isOnline: boolean, lastSeen?: string }>;
+
+  constructor() {
+    this.connectedUsers = new Map();
+  }
+
+  // User Management Methods
+  async getUser(id: number): Promise<User | undefined> {
+    return db.findUserById(id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    return db.findUserByUsername(username);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    return db.createUser(user);
+  }
+  
+  async authenticateUser(credentials: SignInCredentials): Promise<User | null> {
+    return db.authenticateUser(credentials);
+  }
+  
+  async updateUserOnlineStatus(userId: number, isOnline: boolean): Promise<void> {
+    await db.updateUserOnlineStatus(userId, isOnline);
+  }
+  
+  async updateUserLastSeen(userId: number): Promise<void> {
+    await db.updateUserLastSeen(userId);
+  }
+  
+  // Public Message Methods
+  async getAllMessages(): Promise<(ChatMessage | SystemMessage)[]> {
+    return db.getAllMessages();
+  }
+  
+  async createMessage(message: InsertMessage): Promise<ChatMessage> {
+    return db.createMessage(message);
+  }
+  
+  async createSystemMessage(content: string): Promise<SystemMessage> {
+    return db.createSystemMessage(content);
+  }
+  
+  // Direct Message Methods
+  async getDirectMessagesBetweenUsers(user1Id: number, user2Id: number): Promise<DirectChatMessage[]> {
+    return db.getDirectMessagesBetweenUsers(user1Id, user2Id);
+  }
+  
+  async getDirectMessagesByUser(userId: number): Promise<DirectChatMessage[]> {
+    return db.getDirectMessagesByUser(userId);
+  }
+  
+  async createDirectMessage(message: InsertDirectMessage): Promise<DirectChatMessage> {
+    return db.createDirectMessage(message);
+  }
+  
+  async markDirectMessagesAsRead(senderId: number, receiverId: number): Promise<void> {
+    await db.markDirectMessagesAsRead(senderId, receiverId);
+  }
+  
+  async getUnreadMessageCount(userId: number): Promise<Record<number, number>> {
+    return db.getUnreadMessageCount(userId);
+  }
+  
+  // Connected User Methods
+  async getConnectedUsers(): Promise<{ id: number, username: string, isOnline: boolean, lastSeen?: string }[]> {
+    return Array.from(this.connectedUsers.values());
+  }
+  
+  async addConnectedUser(user: User): Promise<void> {
+    await this.updateUserOnlineStatus(user.id, true);
+    
+    this.connectedUsers.set(user.id, { 
+      id: user.id, 
+      username: user.username,
+      isOnline: true,
+      lastSeen: new Date().toISOString()
+    });
+  }
+  
+  async removeConnectedUser(userId: number): Promise<void> {
+    await this.updateUserOnlineStatus(userId, false);
+    await this.updateUserLastSeen(userId);
+    this.connectedUsers.delete(userId);
+  }
+}
+
+// Use the database storage implementation
+export const storage = new DatabaseStorage();

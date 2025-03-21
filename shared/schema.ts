@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean, foreignKey } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { relations } from "drizzle-orm";
 
 // Users table
 export const users = pgTable("users", {
@@ -14,6 +15,13 @@ export const users = pgTable("users", {
   lastSeen: timestamp("last_seen"),
 });
 
+// Set up relations for the users table
+export const usersRelations = relations(users, ({ many }) => ({
+  sentMessages: many(directMessages, { relationName: "sender" }),
+  receivedMessages: many(directMessages, { relationName: "receiver" }),
+  publicMessages: many(messages),
+}));
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -21,7 +29,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export const signInSchema = z.object({
-  username: z.string().min(2, "Username must be at least 2 characters").max(15, "Username must be less than 15 characters"),
+  username: z.string().min(2, "Username must be at least 2 characters").max(50, "Username must be less than 50 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
@@ -32,16 +40,26 @@ export type User = typeof users.$inferSelect;
 // Messages table - for public chat
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   username: text("username").notNull(),
   content: text("content").notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
+  type: text("type").default("message").notNull(),
 });
+
+// Set up relations for the messages table
+export const messagesRelations = relations(messages, ({ one }) => ({
+  user: one(users, {
+    fields: [messages.userId],
+    references: [users.id],
+  }),
+}));
 
 export const insertMessageSchema = createInsertSchema(messages).pick({
   userId: true,
   username: true,
   content: true,
+  type: true,
 });
 
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
@@ -50,20 +68,30 @@ export type Message = typeof messages.$inferSelect;
 // Direct messages table
 export const directMessages = pgTable("direct_messages", {
   id: serial("id").primaryKey(),
-  senderId: integer("sender_id").notNull(),
-  senderUsername: text("sender_username").notNull(),
-  receiverId: integer("receiver_id").notNull(),
-  receiverUsername: text("receiver_username").notNull(),
+  senderId: integer("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  receiverId: integer("receiver_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   read: boolean("read").default(false),
 });
 
+// Set up relations for the directMessages table
+export const directMessagesRelations = relations(directMessages, ({ one }) => ({
+  sender: one(users, {
+    fields: [directMessages.senderId],
+    references: [users.id],
+    relationName: "sender",
+  }),
+  receiver: one(users, {
+    fields: [directMessages.receiverId],
+    references: [users.id],
+    relationName: "receiver",
+  }),
+}));
+
 export const insertDirectMessageSchema = createInsertSchema(directMessages).pick({
   senderId: true,
-  senderUsername: true,
   receiverId: true,
-  receiverUsername: true,
   content: true,
 });
 

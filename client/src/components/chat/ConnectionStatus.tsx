@@ -1,7 +1,7 @@
-import { type ConnectionStatus } from '@/lib/socket';
+import { type ConnectionStatus as ConnectionStatusType } from '@/lib/socket';
 
 interface ConnectionStatusProps {
-  status: ConnectionStatus;
+  status: ConnectionStatusType;
 }
 
 export function ConnectionStatus({ status }: ConnectionStatusProps) {
@@ -9,41 +9,24 @@ export function ConnectionStatus({ status }: ConnectionStatusProps) {
     switch (status) {
       case 'connected':
         return {
-          container: 'bg-green-100 text-green-800',
-          dot: 'bg-green-500'
+          dot: 'bg-green-500 animate-pulse'
         };
       case 'connecting':
         return {
-          container: 'bg-yellow-100 text-yellow-800',
-          dot: 'bg-yellow-500'
+          dot: 'bg-amber-500 animate-pulse'
         };
       case 'disconnected':
         return {
-          container: 'bg-red-100 text-red-800',
           dot: 'bg-red-500'
         };
-    }
-  };
-
-  const getStatusText = () => {
-    switch (status) {
-      case 'connected':
-        return 'Connected';
-      case 'connecting':
-        return 'Connecting...';
-      case 'disconnected':
-        return 'Disconnected';
     }
   };
 
   const styles = getStatusStyles();
 
   return (
-    <div className={`flex items-center px-2 py-1 rounded-full ${styles.container} text-xs font-medium`}>
-      <span className={`h-2 w-2 rounded-full ${styles.dot} mr-1.5`}></span>
-      <span>{getStatusText()}</span>
-    </div>
+    <span className="flex items-center">
+      <span className={`h-2 w-2 rounded-full ${styles.dot} mr-1.5 inline-block shadow-sm`}></span>
+    </span>
   );
 }
-
-export default ConnectionStatus;

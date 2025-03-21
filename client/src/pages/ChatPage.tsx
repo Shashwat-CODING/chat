@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useChat } from "@/hooks/useChat";
 import { DirectMessagePanel } from "@/components/chat/DirectMessagePanel";
 import { UserList } from "@/components/chat/UserList";
+import { MobileNav } from "@/components/chat/MobileNav";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { MessageInput } from "@/components/chat/MessageInput";
 import { ConnectionStatus } from "@/components/chat/ConnectionStatus";
@@ -12,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useRef } from "react";
 import { LogOut, MessageCircle, Users } from "lucide-react";
+import { createUniqueMessageMap } from "@/useChat.fix";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export default function ChatPage() {
   const {
@@ -54,6 +57,11 @@ export default function ChatPage() {
   const selectedUserMessages = directChat.selectedUser 
     ? directChat.directMessages[directChat.selectedUser.id] || []
     : [];
+    
+  // Create a map of messages with unique keys to prevent React warnings
+  const uniqueMessages = useMemo(() => {
+    return createUniqueMessageMap(messages);
+  }, [messages]);
 
   return (
     <>
@@ -114,9 +122,9 @@ export default function ChatPage() {
                 </div>
                 <ScrollArea className="flex-1 p-4">
                   <div className="space-y-4">
-                    {messages.map((message) => (
+                    {Object.entries(uniqueMessages).map(([uniqueId, message]) => (
                       <MessageBubble
-                        key={message.id}
+                        key={uniqueId}
                         message={message}
                         isCurrentUser={
                           message.type === "message" && 

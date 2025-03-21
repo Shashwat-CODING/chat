@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
+import { AtSign, LockKeyhole } from "lucide-react";
 
 interface SignInFormProps {
   onSubmit: (values: SignInCredentials) => Promise<boolean>;
@@ -30,7 +31,7 @@ export function SignInForm({ onSubmit, onToggleForm, isSubmitting }: SignInFormP
     try {
       const success = await onSubmit(values);
       if (!success) {
-        setError("Invalid username or password");
+        setError("Invalid username/email or password");
       }
     } catch (err) {
       toast({
@@ -42,11 +43,11 @@ export function SignInForm({ onSubmit, onToggleForm, isSubmitting }: SignInFormP
   };
   
   return (
-    <Card className="w-[350px] mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-        <CardDescription>
-          Enter your credentials to sign in to your account
+    <Card className="w-full max-w-md mx-auto border-none shadow-lg dark:bg-[#111B21] dark:text-gray-100">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">WhatsClone</CardTitle>
+        <CardDescription className="text-center">
+          Enter your email or username to sign in
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -57,9 +58,16 @@ export function SignInForm({ onSubmit, onToggleForm, isSubmitting }: SignInFormP
               name="username"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Email or Username</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your username" {...field} />
+                    <div className="relative">
+                      <AtSign className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        placeholder="you@example.com or username" 
+                        className="pl-10" 
+                        {...field} 
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -73,7 +81,15 @@ export function SignInForm({ onSubmit, onToggleForm, isSubmitting }: SignInFormP
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <div className="relative">
+                      <LockKeyhole className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input 
+                        type="password" 
+                        placeholder="••••••••" 
+                        className="pl-10"
+                        {...field} 
+                      />
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -84,15 +100,23 @@ export function SignInForm({ onSubmit, onToggleForm, isSubmitting }: SignInFormP
               <div className="text-sm font-medium text-destructive">{error}</div>
             )}
             
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
+            <Button 
+              type="submit" 
+              className="w-full bg-primary hover:bg-primary/90"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </Form>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <Button variant="link" onClick={onToggleForm}>
-          Don't have an account? Sign up
+      <CardFooter className="flex flex-col space-y-4">
+        <Button 
+          variant="outline" 
+          onClick={onToggleForm}
+          className="w-full border-primary/20 hover:bg-primary/5"
+        >
+          Don't have an account? Create one
         </Button>
       </CardFooter>
     </Card>
