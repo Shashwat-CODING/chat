@@ -27,7 +27,8 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased bg-background text-foreground overflow-hidden touch-manipulation;
+    overscroll-behavior: none;
   }
 
   /* Dark mode styles */
@@ -35,34 +36,46 @@
     --background: var(--app-bg-dark);
     --foreground: #E4E6EB;
   }
+  
+  /* Fix viewport height issues on mobile */
+  html, body {
+    @apply h-full;
+  }
+  
+  #root {
+    @apply h-full;
+  }
 }
 
 @layer components {
   /* Modern styled message bubbles */
   .message-bubble-incoming {
     @apply bg-[var(--message-incoming-light)] dark:bg-[var(--message-incoming-dark)] 
-           rounded-2xl rounded-tl-md shadow-sm text-slate-800;
+           text-slate-800 dark:text-slate-200;
   }
   
   .message-bubble-outgoing {
     @apply bg-[var(--message-outgoing-light)] dark:bg-[var(--message-outgoing-dark)] 
-           text-slate-800 dark:text-white rounded-2xl rounded-tr-md shadow-sm;
+           text-slate-800 dark:text-white;
   }
   
   /* Chat background with subtle pattern */
   .whatsapp-bg {
     @apply bg-[var(--chat-bg-light)] dark:bg-[var(--chat-bg-dark)];
     background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%232563EB' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
   }
   
   /* Sidebar styling */
   .whatsapp-sidebar {
-    @apply bg-[var(--sidebar-bg-light)] dark:bg-[var(--sidebar-bg-dark)] border-r border-border/30;
+    @apply bg-[var(--sidebar-bg-light)] dark:bg-[var(--sidebar-bg-dark)] 
+           border-r border-border/30 shadow-md;
   }
   
   /* Header styling */
   .whatsapp-header {
-    @apply bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] border-b border-border/30;
+    @apply bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] 
+           border-b border-border/30 shadow-sm z-10 sticky top-0;
   }
   
   /* Chat container */
@@ -72,12 +85,14 @@
   
   /* Message input area */
   .message-input-area {
-    @apply bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] border-t border-border/30 p-2 sm:p-3;
+    @apply bg-[var(--header-bg-light)] dark:bg-[var(--header-bg-dark)] 
+           border-t border-border/30 p-2 sm:p-3 sticky bottom-0 z-10;
   }
   
   /* User avatars */
   .user-avatar {
-    @apply bg-primary/10 text-primary rounded-full flex items-center justify-center font-medium text-sm shadow-sm;
+    @apply bg-primary/10 text-primary rounded-full flex items-center justify-center 
+           font-medium text-sm shadow-sm;
   }
 
   /* Custom scrollbar */
@@ -99,17 +114,119 @@
     border-radius: 20px;
   }
 
+  /* Mobile optimizations */
   @media (max-width: 640px) {
     .scrollbar-thin::-webkit-scrollbar {
       width: 4px;
     }
+    
+    /* Improve touch targets */
+    button, a, input, textarea, .clickable {
+      @apply min-h-8;
+    }
+
+    /* Touch target spacing */
+    button:not(.inline-button), 
+    a:not(.inline-link), 
+    .touchable {
+      @apply p-2;
+    }
+    
+    /* Fix bottom spacing for iOS */
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    
+    /* Fix top spacing for iOS */
+    .safe-top {
+      padding-top: env(safe-area-inset-top, 0px);
+    }
   }
 
-  /* Default height adjustments for mobile */
-  @media (max-width: 640px) {
-    .h-screen {
-      height: 100vh;
-      height: calc(var(--vh, 1vh) * 100);
+  /* Mobile height adjustments */
+  .h-screen, .h-full {
+    height: 100vh;
+    height: 100dvh; /* Use dynamic viewport height where supported */
+  }
+  
+  /* Message bubbles for small screens */
+  .mobile-message {
+    @apply max-w-[85%] sm:max-w-[75%];
+  }
+  
+  /* Responsive chat container */
+  .chat-container {
+    @apply flex flex-col h-full overflow-hidden overscroll-none;
+  }
+  
+  /* Prevent scrolling on mobile */
+  .no-scroll {
+    @apply overflow-hidden touch-none;
+    overscroll-behavior: none;
+  }
+  
+  /* Animations */
+  .pulse-animation {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
     }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  /* Mobile navigation slide in */
+  .slide-in {
+    animation: slideIn 0.3s ease-out forwards;
+  }
+  
+  @keyframes slideIn {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  
+  /* Fixed positioning for iOS */
+  .safe-fixed-bottom {
+    @apply fixed bottom-0 left-0 right-0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  
+  /* iOS notch & dynamic island safety */
+  .notch-safe {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Fix for mobile Safari scrolling */
+  @supports (-webkit-touch-callout: none) {
+    .chat-container {
+      /* Mobile Safari hack */
+      height: -webkit-fill-available;
+    }
+  }
+  
+  /* Media query for extra small screens */
+  @media (max-width: 375px) {
+    .xs\:hidden {
+      display: none;
+    }
+    
+    .xs\:text-xs {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    
+    .xs\:p-1 {
+      padding: 0.25rem;
+    }
+  }
+  
+  /* Optimize tap targets for mobile */
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
   }
 }
