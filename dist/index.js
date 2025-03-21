@@ -106,7 +106,13 @@ var insertDirectMessageSchema = createInsertSchema(directMessages).pick({
 // server/db.ts
 import { eq, and, or } from "drizzle-orm";
 neonConfig.fetchConnectionCache = true;
-var sql = neon(process.env.DATABASE_URL);
+var databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error("ERROR: DATABASE_URL environment variable is not set!");
+  console.error("Available environment variables:", Object.keys(process.env).filter((key) => key.startsWith("PG") || key.includes("DATABASE")));
+  throw new Error("No database connection string was provided. Please make sure DATABASE_URL environment variable is properly set.");
+}
+var sql = neon(databaseUrl);
 var db = drizzle(sql, { schema: schema_exports });
 async function findUserById(id) {
   const result = await db.query.users.findFirst({

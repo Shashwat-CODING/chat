@@ -6,7 +6,15 @@ import { eq, and, or } from 'drizzle-orm';
 // Configure neon to use WebSocket for better performance
 neonConfig.fetchConnectionCache = true;
 
-const sql = neon(process.env.DATABASE_URL!);
+// Make sure we have a database connection string
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  console.error("ERROR: DATABASE_URL environment variable is not set!");
+  console.error("Available environment variables:", Object.keys(process.env).filter(key => key.startsWith('PG') || key.includes('DATABASE')));
+  throw new Error("No database connection string was provided. Please make sure DATABASE_URL environment variable is properly set.");
+}
+
+const sql = neon(databaseUrl);
 export const db = drizzle(sql, { schema });
 
 // Create public exported functions for database operations
